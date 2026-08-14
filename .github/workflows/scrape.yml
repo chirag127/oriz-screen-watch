@@ -1,0 +1,75 @@
+name: scrape
+
+# Fetch screener.in fundamentals -> compute value scores + rank -> write
+# data/*.json (git-as-DB) -> notify on stocks NEWLY entering the top-N value
+# rank -> commit back (rebase-before-push). Off-minute cron ~8am IST weekdays.
+# GitHub schedule cron is best-effort (late is fine; queue + next run handle it).
+
+on:
+  schedule:
+    - cron: '17 2 * * 1-5'   # 02:17 UTC = ~7:47 AM IST, Mon-Fri
+  workflow_dispatch:
+  repository_dispatch:
+    types: [tick]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screen-scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Run pipeline (fetch -> score -> JSON -> notify -> commit)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NOTIFY_TOP_N: ${{ vars.NOTIFY_TOP_N }}
+        run: python -m screen_watch -v
+
+      - name: Commit data (git-as-DB — dedup state persistence)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "no data change"
+          else
+            git commit -m "data: screen-watch $(date -u +'%F %H:%MZ')"
+            git pull --rebase --autostash origin main || git rebase --abort
+            git push || echo "push skipped (concurrent run won the race)"
+          fi
+
+      - name: Alert on failure (Telegram)
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TELEGRAM_BOT_TOKEN" ] && { echo "no telegram token; skip"; exit 0; }
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -sS --max-time 20 -X POST \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="⚠️ oriz-screen-watch scrape FAILED — ${RUN_URL}" >/dev/null || true

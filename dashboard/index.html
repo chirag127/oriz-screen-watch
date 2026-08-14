@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screen Watch — Value-Score Tracker</title>
+  <meta name="description" content="screener.in fundamentals + Nifty500-Value-50-style value score for a tracked universe of Indian value stocks. Auto-updated on trading days.">
+  <meta name="theme-color" content="#0f766e">
+  <meta property="og:title" content="Screen Watch — Value-Score Tracker">
+  <meta property="og:description" content="Rank Indian value stocks by a cross-sectional multi-factor value score built from screener.in fundamentals.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap masthead-inner">
+      <div class="brand">
+        <span class="brand-mark">◑</span>
+        <div>
+          <h1 class="brand-title">Screen&nbsp;Watch</h1>
+          <p class="brand-sub">value-score tracker · screener.in fundamentals</p>
+        </div>
+      </div>
+      <div class="masthead-right">
+        <span class="updated" id="updated">loading…</span>
+        <button class="theme-btn" id="theme-btn" aria-label="Toggle theme" title="Toggle theme">☀</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="tiles" id="tiles">
+      <div class="tile"><div class="tile-k" id="k-count">—</div><div class="tile-l">Tracked</div></div>
+      <div class="tile"><div class="tile-k" id="k-cheap">—</div><div class="tile-l">Cheapest</div></div>
+      <div class="tile"><div class="tile-k" id="k-pe">—</div><div class="tile-l">Median P/E</div></div>
+      <div class="tile"><div class="tile-k" id="k-dy">—</div><div class="tile-l">Median Div Yld</div></div>
+    </section>
+
+    <section class="toolbar">
+      <div class="search">
+        <span class="search-i">⌕</span>
+        <input id="q" type="text" placeholder="Filter ticker or name…">
+      </div>
+      <div class="rank-toggle" id="rank-toggle" role="tablist" aria-label="Ranking method">
+        <button class="rt active" data-rank="primary" role="tab">Value 50 (4-factor)</button>
+        <button class="rt" data-rank="alt" role="tab">Enhanced (3-factor)</button>
+      </div>
+    </section>
+
+    <section class="table-wrap">
+      <table class="grid" id="grid">
+        <thead>
+          <tr>
+            <th data-sort="rank" class="num sortable">#</th>
+            <th data-sort="ticker" class="sortable">Ticker</th>
+            <th data-sort="name" class="sortable name-col">Company</th>
+            <th data-sort="current_price" class="num sortable">Price ₹</th>
+            <th data-sort="pe" class="num sortable">P/E</th>
+            <th data-sort="pb" class="num sortable">P/B</th>
+            <th data-sort="dividend_yield" class="num sortable">Div %</th>
+            <th data-sort="roce" class="num sortable">ROCE %</th>
+            <th data-sort="roe" class="num sortable">ROE %</th>
+            <th data-sort="value_score" class="num sortable">Value</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty" hidden>No stocks match.</div>
+    </section>
+
+    <section class="method">
+      <h2>How the value score works</h2>
+      <p>For every tracked stock we take the cheapness factors it exposes on screener.in — <strong>E/P</strong> (1/PE), <strong>B/P</strong> (1/PB), <strong>S/P</strong> (sales-to-price) and <strong>Dividend&nbsp;Yield</strong> — convert each into a cross-sectional <em>z-score</em> across the universe, and average them (a stock missing a factor is averaged over the rest). The average z is mapped to a score of <code>1+z</code> when positive, else <code>1/(1−z)</code>, following the <strong>NSE Nifty500 Value 50</strong> construction. Higher = cheaper. The <em>Enhanced</em> ranking drops dividend yield (BSE-Enhanced-Value style). Ratios absent from the page are shown as <code>—</code>, never fabricated.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p>Part of the <a href="https://oriz.in">oriz</a> family · auto-scraped on trading days ·
+        <a href="https://github.com/chirag127/oriz-screen-watch" target="_blank" rel="noopener">GitHub</a></p>
+      <p class="disclaimer">General information, not investment advice. Data from screener.in; verify before acting.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

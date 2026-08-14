@@ -1,0 +1,27 @@
+[project]
+name = "oriz-screen-watch"
+version = "0.1.0"
+description = "screener.in fundamentals + Nifty500-Value-50-style value-score tracker for Indian equities"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28",
+    "selectolax>=0.3.25",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "respx>=0.21"]
+
+[project.scripts]
+screen-watch = "screen_watch.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = ["integration: live-network tests (skipped by default)"]
